@@ -1,65 +1,151 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Mail, Lock } from "lucide-react";
+
+import { useAuth } from "@/context/AuthContext";
+
+export default function HomePage() {
+  const router = useRouter();
+  const { login } = useAuth();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleLogin = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      await login({ email, password });
+
+      // после логина читаем user из localStorage
+      const storedUser = localStorage.getItem("auth.user");
+      const user = storedUser ? JSON.parse(storedUser) : null;
+
+      if (user?.role === "admin") {
+        router.push("/dashboard");
+      } else {
+        router.push("/");
+      }
+    } catch (e: unknown) {
+      if (
+        e &&
+        typeof e === "object" &&
+        "message" in e &&
+        typeof (e as { message?: unknown }).message === "string"
+      ) {
+        setError((e as { message: string }).message);
+      } else {
+        setError("Login failed");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+    <main className="min-h-screen grid grid-cols-1 md:grid-cols-2">
+      {/* LEFT — IMAGE */}
+      <div className="relative hidden md:block">
         <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
+          src="https://plus.unsplash.com/premium_photo-1683121263622-664434494177?w=900&auto=format&fit=crop&q=60"
+          alt="Fashion brand"
+          fill
+          className="object-cover"
           priority
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute bottom-10 left-10 text-white max-w-md">
+          <h1 className="text-4xl font-semibold tracking-tight">
+            Timeless elegance
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-3 text-sm opacity-80">
+            Discover a new level of premium experience
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </div>
+
+      {/* RIGHT — LOGIN */}
+      <div className="flex items-center justify-center p-6">
+        <Card className="w-full max-w-md border-none shadow-none">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-medium">
+              Sign in to your account
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Welcome back. Please enter your details.
+            </p>
+          </CardHeader>
+
+          <CardContent className="space-y-6">
+            {error && (
+              <div className="text-sm text-red-500 text-center">{error}</div>
+            )}
+
+            <div className="flex items-center gap-4">
+              <Separator className="flex-1" />
+              <span className="text-xs text-muted-foreground">OR</span>
+              <Separator className="flex-1" />
+            </div>
+
+            {/* EMAIL */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="email"
+                  placeholder="you@example.com"
+                  className="pl-10"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* PASSWORD */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  className="pl-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleLogin();
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* LOGIN BUTTON */}
+            <Button className="w-full" onClick={handleLogin} disabled={loading}>
+              {loading ? "Signing in..." : "Sign in"}
+            </Button>
+
+            <p className="text-center text-sm text-muted-foreground mt-2">
+              Read documentation about Bossforskiy{" "}
+              <Link href="/docs" className="underline text-black">
+                here
+              </Link>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </main>
   );
 }
